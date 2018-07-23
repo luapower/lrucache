@@ -42,32 +42,48 @@ function cache:free()
 	end
 end
 
+function cache:free_size()
+	return self.max_size - self.total_size
+end
+
 function cache:value_size(val) return 1 end --stub, size must be >= 0 always
 function cache:free_value(val) end --stub
 
 function cache:get(key)
 	local val = self.values[key]
-	if not val then return end
+	if not val then return nil end
 	self.lru:remove(val)
 	self.lru:insert_first(val)
 	return val
 end
 
-function cache:remove(key)
-	local val = self.values[key]
-	if not val then return end
+function cache:_remove(key, val)
+	local val_size = self:value_size(val)
 	self.lru:remove(val)
 	self:free_value(val)
 	self.values[key] = nil
 	self.keys[val] = nil
-	self.total_size = self.total_size - self:value_size(val)
+	self.total_size = self.total_size - val_size
+end
+
+function cache:remove(key)
+	local val = self.values[key]
+	if not val then return nil end
+	self:_remove(key, val)
 	return val
+end
+
+function cache:remove_val(val)
+	local key = self.keys[val]
+	if not key then return nil end
+	self:_remove(key, val)
+	return key
 end
 
 function cache:remove_last()
 	local val = self.lru.last
-	if not val then return end
-	self:remove(self.keys[val])
+	if not val then return nil end
+	self:_remove(self.keys[val], val)
 	return val
 end
 
