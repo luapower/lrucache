@@ -91,7 +91,7 @@ function cache:put(key, val)
 	local val_size = self:value_size(val)
 	local old_val = self.values[key]
 	if old_val then
-		self.lru:remove(val)
+		self.lru:remove(old_val)
 		self.total_size = self.total_size - val_size
 	end
 	while self.lru.last and self.total_size + val_size > self.max_size do
